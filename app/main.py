@@ -3,12 +3,62 @@ from fastapi.responses import PlainTextResponse
 from datetime import datetime
 import os
 import json
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# constants
+WHATSAPP_API_URL:str = "https://graph.facebook.com/v22.0/969259519597042/messages"
+WHATSAPP_TOKEN:str = os.getenv("WHATSAPP_TOKEN","NO_TOKEN")# temp token or permanent token.
+
 
 app = FastAPI(title="Facebook Webhook Server")
 
 def print_json(data, indent=2):
     """Pretty print JSON"""
     print(json.dumps(data, indent=indent))
+
+
+async def send_whatsapp_message(phone_number:str, message:str)->bool:
+    result:bool = False
+    headers = {
+        "Authorization":f"Bearer {WHATSAPP_TOKEN}",
+        "Content-Type":"application/json"
+    }
+
+    bot_message:str = f"Bot Echo : {message}"
+    payload = {
+        "messaging_product" : "whatsapp",
+        "to":phone_number,
+        "type":"text",
+        "text":{
+            "body":bot_message
+        }
+    }
+
+
+    try :
+        response = requests.post(
+            WHATSAPP_API_URL,
+            headers=headers,
+            json=payload,
+            timeout=10
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+        print(f"✅ Message sent successfully to {phone_number}")
+        result = True
+    
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Failed to send message: {e}")
+    
+    except Exception as e : 
+        print(f"❌ Unexpected error: {e}")
+    
+    return result
 
 # GET endpoint for webhook verification
 @app.get("/", response_class=PlainTextResponse)
@@ -33,21 +83,36 @@ async def receive_webhook(request: Request):
     print(f"\n{'='*50}")
     print(f"Webhook received {timestamp}")
     print(f"{'='*50}\n")
-    
+    api_result:bool = False
+
     try:
-        body = await request.json()
-        print_json(body)
+        body :dict = await request.json()
+        contact_name:str = body["entry"][0]["changes"]["value"]["contacts"][0]["profile"]["name"]
+        phone_number:str = body["entry"][0]["changes"]["value"]["contacts"][0]["wa_id"]
+        message:str = body["entry"][0]["changes"]["value"]["messages"][0]["text"]["body"]
+        print(f"The text typed by client {contact_name} is - {message}")
+
+        # want to make an api request here and send the status as success or failure.
+        # your code goes here.
+        api_result = await send_whatsapp_message(phone_number, message)
+        
+        # print_json(body)
     except Exception as e:
         print(f"Error parsing JSON: {e}")
         body = await request.body()
         print(f"Raw body: {body.decode()}")
     
-    return {"status": "ok"}
+    if api_result==False :
+        return {"status":"failed"}
+    
+    return {"status": "success"}
 
 # Health check endpoint for Render
 @app.get("/health")
 async def health_check():
+    print("token from .env file is ", WHATSAPP_TOKEN)
     return {"status": "healthy", "service": "facebook-webhook"}
+
 
 # For local development
 if __name__ == "__main__":
