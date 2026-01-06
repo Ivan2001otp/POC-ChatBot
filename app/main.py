@@ -88,9 +88,9 @@ async def receive_webhook(request: Request):
     try:
         body :dict = await request.json()
         print(print_json(body, 2))
-        contact_name:str = body["entry"][0]["changes"]["value"]["contacts"][0]["profile"]["name"]
-        phone_number:str = body["entry"][0]["changes"]["value"]["contacts"][0]["wa_id"]
-        message:str = body["entry"][0]["changes"]["value"]["messages"][0]["text"]["body"]
+        contact_name:str = body["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
+        phone_number:str = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+        message:str = body["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
         print(f"The text typed by client {contact_name} is - {message}")
 
         # want to make an api request here and send the status as success or failure.
