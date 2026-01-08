@@ -118,6 +118,7 @@ async def craft_message(phone_number:str, message:str) -> bool :
     thanku_regex_pattern = r'\b(thank\s*you|thanks|thanx|thnx|thx|ty)\b'
 
     if re.search(regex_pattern, message, re.IGNORECASE):
+        print("user typed hi")
         bot_message = """
             Hi there, Expense manager bot this side. How can I help you today.\n
             Type in the number to perform the desired task.\n\n
@@ -127,6 +128,7 @@ async def craft_message(phone_number:str, message:str) -> bool :
 
             Note : Type in the number . For eg : 1 or 2.
         """
+        print("sending bot message via whatsapp cloud api")
         result = await send_whatsapp_message(phone_number=phone_number, message=bot_message)
 
     elif re.search(thanku_regex_pattern, message, re.IGNORECASE):
