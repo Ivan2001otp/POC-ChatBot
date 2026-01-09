@@ -240,35 +240,39 @@ async def submit_expense_and_finalize(phone_number: str) -> bool:
         
         api_response = await add_expense_api(api_payload)
         print("api-response after adding expense ✅ : ", api_response)
-        if api_response.get('success', False):
+        
+        if "data" in api_response:
             # Success case
             expense = api_response.get('data', {})
-            bot_message = f"""✅ **Expense Added Successfully!**
+            bot_message = f"""
+            ✅ *Expense Added Successfully!*
 
-                                    Here are the details:
-                                    • Project: {expense.get('project', 'N/A')}
-                                    • Employee: {expense.get('employee', 'N/A')}
-                                    • Amount: ${expense.get('expense_amount', 0)}
-                                    • Type: {expense.get('expense_type', 'N/A')}
-                                    • Description: {expense.get('description', 'No description')}
+            Here are the details:
+            • Project: {expense.get('project', 'N/A')}
+            • Employee: {expense.get('employee', 'N/A')}
+            • Amount: ${expense.get('expense_amount', 0)}
+            • Type: {expense.get('expense_type', 'N/A')}
+            • Description: {expense.get('description', 'No description')}
 
-                                    Your expense has been recorded. Type 'hi' to start over."""
+            Your expense has been recorded. Type 'hi' to start over."""
         else:
             # Error case
             error_msg = api_response.get('message', 'Unknown error')
-            bot_message = f"""❌ **Failed to Add Expense**
+            bot_message = f"""
+            ❌*Failed to Add Expense*
 
-                                Error: {error_msg}
+            Error: {error_msg}
 
-                                Please check your details and try again. Type 'hi' to restart."""
+            Please check your details and try again. Type 'hi' to restart."""
             
     except Exception as e:
         print(f"Error submitting expense: {e}")
-        bot_message = f"""❌ **Error Processing Request**
+        bot_message = f"""
+        ❌ *Error Processing Request**
 
-                        Sorry, we encountered an error while processing your expense. Please try again later.
+        Sorry, we encountered an error while processing your expense. Please try again later.
 
-                        Type 'hi' to start over."""
+        Type 'hi' to start over."""
     
     # Send final message
     result = await send_whatsapp_message(phone_number=phone_number, message=bot_message)
