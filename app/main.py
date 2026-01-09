@@ -112,7 +112,7 @@ async def handle_get_user_expense(phone_number:str, message:str)->str :
 
 async def craft_message(phone_number:str, message:str) -> bool :
     print("executing craft message")
-    
+
     regex_pattern : str =  r'\b(hi|hello)\b'
     bot_message:str = ''
     result  = False
@@ -248,9 +248,8 @@ async def receive_webhook(request: Request):
 
         # want to make an api request here and send the status as success or failure.
         # your code goes here.
-        api_result =  craft_message(phone_number=phone_number, message=message)
+        api_result =  await craft_message(phone_number=phone_number, message=message)
         # api_result = await send_whatsapp_message(phone_number, message)
-        
         # print_json(body)
     except Exception as e:
         print(f"Error parsing JSON: {e}")
@@ -258,8 +257,10 @@ async def receive_webhook(request: Request):
         print(f"Raw body: {body.decode()}")
     
     if api_result==False :
+        print("response status is failed")
         return {"status":"failed"}
-    
+
+        print("response status is success")
     return {"status": "success"}
 
 # Health check endpoint for Render
