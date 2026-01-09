@@ -231,7 +231,7 @@ async def submit_expense_and_finalize(phone_number: str) -> bool:
         "description": expense_data.get('description', '')
     }
 
-    print("The api payload for add-expense is ", api_payload)
+    print("The api payload for add-expense is ✅", api_payload)
     
     bot_message = ""
     
@@ -239,7 +239,7 @@ async def submit_expense_and_finalize(phone_number: str) -> bool:
         # Call your add expense API
         
         api_response = await add_expense_api(api_payload)
-        
+        print("api-response after adding expense ✅ : ", api_response)
         if api_response.get('success', False):
             # Success case
             expense = api_response.get('data', {})
@@ -442,11 +442,12 @@ def serialize_get_api_response(api_response:Dict[str,Any]):
     formatted_strings = []
 
     for idx, expense in enumerate(rsp.data, 1):
-        expense_str = f"""Expense-{idx}
-                Name: {expense.name}
-                Description: {expense.description if expense.description else 'No description'}
-                Expense Amount: {expense.expense_amount}
-                Employee: {expense.employee}
+        expense_str = f"""
+            Expense-{idx}
+            Name: {expense.name}
+            Description: {expense.description if expense.description else 'No description'}
+            Expense Amount: {expense.expense_amount}
+            Employee: {expense.employee}
 
                 """
         formatted_strings.append(expense_str)
@@ -530,9 +531,12 @@ async def add_expense_api(payload:dict[str, Any])->Dict[str, Any] :
         response.raise_for_status()
         
         result = parse_add_expense_response(response)
+        print("expense is successfully added to our system ✅")
         return result.to_dict()
         
     except requests.exceptions.RequestException as e :
+        print("error on executing add_expense_api ❌")
+        print(str(e))
         error_response = AddExpenseError(
             success=False, 
             message="Network error - failed to connect to expense system",
@@ -541,11 +545,6 @@ async def add_expense_api(payload:dict[str, Any])->Dict[str, Any] :
 
     return error_response.to_dict() 
 
-# @app.post("/test-add-expense")
-# async def handle_add_expense(request:Request):
-#     #phone_number:str, message:str
-#     response =  await add_expense_api()
-#     return response
 
 async def handle_get_user_expense(phone_number:str, message:str)->str :
     endpoint:str = "api/resource/CTExpense"
