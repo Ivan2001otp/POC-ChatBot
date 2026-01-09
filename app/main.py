@@ -101,7 +101,7 @@ Kindly pick the valid choices again.
                     
                     bot_message = """Great! Let's add a new expense. I'll guide you step by step.
 
-First, please provide the **Project Name** (must be an existing project):"""
+First, please provide the *Project Name* (must be an existing project):"""
                     result = await send_whatsapp_message(phone_number=phone_number, message=bot_message)
                     
                 case 2:
@@ -157,10 +157,7 @@ async def handle_expense_workflow(phone_number: str, user_input: str) -> bool:
                         workflow['step'] = 'ask_expense_type'
                         bot_message = """Now, please select the *Expense Type*:
                                         1. Food
-                                        2. Travel
-                                        3. Office Supplies
-                                        4. Equipment
-                                        5. Other 
+                                        2. Travel 
 
                                         Type the number corresponding to your choice (1-5):"""
                 except ValueError:
@@ -170,23 +167,18 @@ async def handle_expense_workflow(phone_number: str, user_input: str) -> bool:
                 # Map number choices to expense types
                 expense_type_map = {
                     '1': 'Food',
-                    '2': 'Travel', 
-                    '3': 'Office Supplies',
-                    '4': 'Equipment',
-                    '5': 'Other'
+                    '2': 'Travel'
                 }
                 
                 if user_input in expense_type_map:
                     current_expense_data[phone_number]['expense_type'] = expense_type_map[user_input]
                     workflow['step'] = 'ask_description'
-                    bot_message = "Almost done! Please provide a *Description* for this expense (optional, type '*skip*' to skip):"
+                    bot_message = "Almost done! Please provide a *Description* for this expense (optional, type *skip* to skip):"
                 else:
                     bot_message = """Please select a valid option (1-5):
                                     1. Food
                                     2. Travel
-                                    3. Office Supplies
-                                    4. Equipment
-                                    5. Other"""
+                                    """
                     
             case 'ask_description':
                 # Store description (allow empty/skip)
