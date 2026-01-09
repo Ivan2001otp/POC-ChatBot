@@ -56,11 +56,11 @@ async def craft_message_v2(phone_number: str, message: str) -> bool:
             del current_expense_data[phone_number]
        
         bot_message = """Hi there, Expense manager bot this side. \nHow can I help you today.\n
-Type in the number to perform the desired task.\n\n
-1. Add expense
-2. Get user expense
+                        Type in the number to perform the desired task.\n\n
+                        1. Add expense
+                        2. Get user expense
 
-Note : Type in the number. For eg: 1 or 2."""
+                        Note : Type in the number. For eg: 1 or 2."""
         print("sending bot message via whatsapp cloud api")
         result = await send_whatsapp_message(phone_number=phone_number, message=bot_message)
 
@@ -135,7 +135,7 @@ async def handle_expense_workflow(phone_number: str, user_input: str) -> bool:
                 else:
                     current_expense_data[phone_number]['project'] = user_input.strip()
                     workflow['step'] = 'ask_employee'
-                    bot_message = "Great! Now please provide the **Employee Email** (must be an existing employee email):"
+                    bot_message = "Great! Now please provide the *Employee Email* (must be an existing employee email)"
                     
             case 'ask_employee':
                 # Basic email validation
@@ -144,7 +144,7 @@ async def handle_expense_workflow(phone_number: str, user_input: str) -> bool:
                 else:
                     current_expense_data[phone_number]['employee'] = user_input.strip()
                     workflow['step'] = 'ask_expense_amount'
-                    bot_message = "Now, please provide the **Expense Amount** (numbers only, e.g., 500):"
+                    bot_message = "Now, please provide the *Expense-Amount* (numbers only, e.g., 500):"
                     
             case 'ask_expense_amount':
                 # Validate it's a number
@@ -155,7 +155,7 @@ async def handle_expense_workflow(phone_number: str, user_input: str) -> bool:
                     else:
                         current_expense_data[phone_number]['expense_amount'] = amount
                         workflow['step'] = 'ask_expense_type'
-                        bot_message = """Now, please select the **Expense Type**:
+                        bot_message = """Now, please select the *Expense Type*:
                                         1. Food
                                         2. Travel
                                         3. Office Supplies
@@ -179,7 +179,7 @@ async def handle_expense_workflow(phone_number: str, user_input: str) -> bool:
                 if user_input in expense_type_map:
                     current_expense_data[phone_number]['expense_type'] = expense_type_map[user_input]
                     workflow['step'] = 'ask_description'
-                    bot_message = "Almost done! Please provide a **Description** for this expense (optional, type 'skip' to skip):"
+                    bot_message = "Almost done! Please provide a *Description* for this expense (optional, type '*skip*' to skip):"
                 else:
                     bot_message = """Please select a valid option (1-5):
                                     1. Food
@@ -230,6 +230,8 @@ async def submit_expense_and_finalize(phone_number: str) -> bool:
         "expense_type": expense_data.get('expense_type', 'Other'),
         "description": expense_data.get('description', '')
     }
+
+    print("The api payload for add-expense is ", api_payload)
     
     bot_message = ""
     
@@ -516,7 +518,7 @@ def parse_add_expense_response(response:requests.Response) -> Union[AddExpenseRe
         )
 
 
-async def add_expense_api()->Dict[str, Any] : 
+async def add_expense_api(payload:dict[str, Any])->Dict[str, Any] : 
     endpoint : str = "api/resource/CTExpense"
     headers:dict[str,str] = {
         "Authorization" : "token 9822fb1487561f6:8c3f8d54fd1cade"
@@ -524,7 +526,7 @@ async def add_expense_api()->Dict[str, Any] :
     url :str = f"{BASE_URL}/{endpoint}"
 
     try :
-        response =  requests.post(url=url,headers = headers)
+        response =  requests.post(url=url,headers = headers,data=payload)
         response.raise_for_status()
         
         result = parse_add_expense_response(response)
@@ -650,7 +652,7 @@ async def send_whatsapp_message(phone_number:str, message:str)->bool:
         "Content-Type":"application/json"
     }
 
-    bot_message:str = f"Bot Echo : {message}"
+    bot_message:str = f"*Expense Manager Bot* : \n\n {message}"
     payload = {
         "messaging_product" : "whatsapp",
         "to":phone_number,
