@@ -134,6 +134,7 @@ async def craft_message(phone_number:str, message:str) -> bool :
         result = await send_whatsapp_message(phone_number=phone_number, message=bot_message)
 
     elif re.search(thanku_regex_pattern, message, re.IGNORECASE):
+        print("user might have typed thank u")
         bot_message = """
            Your Welcome. 
            Thank you for using our service.
@@ -142,6 +143,7 @@ async def craft_message(phone_number:str, message:str) -> bool :
 
     else :
     # check if the input is a valid numerical  choice or not.
+        print("user has given choice")
         if message.isdigit() : 
             choice = int(message)
 
@@ -159,10 +161,12 @@ async def craft_message(phone_number:str, message:str) -> bool :
 
             match choice:
                 case 1:
+                    print("user selected choice 1")
                     bot_message = await handle_add_expense(phone_number=phone_number, message="Add expense api is not working now. Try later.")
-                    result = await send_whatsapp_message(phone_number=phone_number, message=bot_message)
+                    result = True#await send_whatsapp_message(phone_number=phone_number, message=bot_message)
                     return result
                 case 2:
+                    print("user selected choice 2")
                     bot_message =  await handle_get_user_expense(phone_number=phone_number, message=message)
                     result = await send_whatsapp_message(phone_number=phone_number, message=bot_message)
                     return result
@@ -236,31 +240,45 @@ async def receive_webhook(request: Request):
     print(f"\n{'='*50}")
     print(f"Webhook received {timestamp}")
     print(f"{'='*50}\n")
-    api_result:bool = False
+    api_result: bool = False
 
     try:
-        body :dict = await request.json()
-        print(print_json(body, 2))
-        contact_name:str = body["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
-        phone_number:str = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
-        message:str = body["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
-        print(f"The text typed by client {contact_name} is - {message}")
+        # Get raw body first
+        raw_body = await request.body()
+        body_str = raw_body.decode('utf-8')
+        print(f"Raw body: {body_str}")
+        
+        # Parse JSON
+        body: dict = json.loads(body_str)
+        print_json(body, 2)
+        
+        contact_name: str = body["entry"][0]["changes"][0]["value"]["contacts"][0]["profile"]["name"]
+        phone_number: str = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+        message: str = body["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
 
-        # want to make an api request here and send the status as success or failure.
-        # your code goes here.
-        api_result =  await craft_message(phone_number=phone_number, message=message)
-        # api_result = await send_whatsapp_message(phone_number, message)
-        # print_json(body)
-    except Exception as e:
+        api_result = await craft_message(phone_number=phone_number, message=message)
+        
+    except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
-        body = await request.body()
-        print(f"Raw body: {body.decode()}")
+        print(f"Raw body that caused error: {body_str}")
+        return {"status": "failed", "error": "Invalid JSON"}
+        
+    except KeyError as e:
+        print(f"Missing expected field in JSON: {e}")
+        print(f"Available keys: {list(body.keys()) if 'body' in locals() else 'No body parsed'}")
+        return {"status": "failed", "error": f"Missing field: {e}"}
+        
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"status": "failed", "error": str(e)}
     
-    if api_result==False :
+    if not api_result:
         print("response status is failed")
-        return {"status":"failed"}
-
-        print("response status is success")
+        return {"status": "failed"}
+    
+    print("response status is success")
     return {"status": "success"}
 
 # Health check endpoint for Render
